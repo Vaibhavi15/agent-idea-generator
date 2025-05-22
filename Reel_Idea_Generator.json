@@ -1,0 +1,307 @@
+{
+  "name": "Reel-Idea-Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 0 21 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "38c88745-8342-469e-be2b-cccdbf31b334",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Give me 1 fresh AI agent idea that would be valuable for people in 2025. Avoid anything too generic like \"email sorter\" or \"social media scheduler.\"\n\nThe ideas should:\n\nBe practical and unique\n\nFeel “Why didn’t I think of that!”\n\nTap into emerging trends (AI, automation, productivity, solopreneur tools, etc.)",
+        "options": {
+          "systemMessage": "You are an expert AI product strategist who helps to brainstorm highly engaging AI agent ideas.\n\nYour goal is to suggest creative, useful, and trending agent ideas that can be built using no-code tools like n8n, and are especially interesting to solopreneurs, marketers, freelancers, and content creators.\n\nAlways avoid repeating or suggesting ideas similar to those already listed in memory.\n\nThink from the user’s perspective:\n\nWhat would save them time or money?\n\nWhat could automate boring or manual work?\n\nWhat would help them grow on social media or in business?\n\nYou must include:\n\nA name for the agent\n\nA brief one-liner summary\n\nA short description of what it does\n\nRefer to {{memory}} for previously suggested ideas to avoid duplication."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        220,
+        0
+      ],
+      "id": "9926d3da-2cb8-4829-9ac7-47e855396400",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4",
+          "mode": "list",
+          "cachedResultName": "gpt-4"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        220,
+        180
+      ],
+      "id": "3b3a36df-b81c-4491-b29b-1961e95be850",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "9jaBBnB6QCeSlXiQ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "12345",
+        "collectionName": "reels-ideas",
+        "databaseName": "n8n-db"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryMongoDbChat",
+      "typeVersion": 1,
+      "position": [
+        320,
+        180
+      ],
+      "id": "ecae51a8-352b-4283-8b76-288ecee2e134",
+      "name": "MongoDB Chat Memory",
+      "credentials": {
+        "mongoDb": {
+          "id": "Z89BcADg7qxrNF3l",
+          "name": "MongoDB account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=I want to build an AI agent with the following description:\n\n{{ $json.output }}\n\nPlease give me a step-by-step implementation plan using n8n, OpenAI, or other appropriate tools. Include how to handle memory, feedback, and how I could scale or improve this later.",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a senior AI product architect who specializes in breaking down AI agent ideas into actionable build plans.  When a user describes an AI agent idea, your job is to return a detailed, step-by-step plan to implement that agent.  The steps should be tool-specific, especially using platforms like:  n8n (for workflows, API calls, triggers, memory, webhooks)  LangChain (if used)  LLM APIs (e.g., OpenAI, Claude, Groq)  Vector DBs or Memory Tools (Zep, Redis, etc.)  Your response should include:  Overview: What the agent does and how it benefits the user  Tech Stack Recommendation: What tools are best to use for this  Step-by-Step Build Plan: Clear breakdown of how to build it  Optional Enhancements: Smart upgrades like memory, user feedback loop, or multi-agent communication  Output should be clear enough for a no-code or low-code builder to follow."
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        540,
+        0
+      ],
+      "id": "8e713356-aa38-4f3d-b66c-5cb319c19095",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        560,
+        180
+      ],
+      "id": "06918b38-526a-41c4-81c9-9bb41b4e21cb",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "9jaBBnB6QCeSlXiQ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write a short video script in “build with me” style based on this info:\n\nWhat I built:\n{{ $('AI Agent').item.json.output }}\n\nHow I built it:\n{{ $json.text }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a scriptwriter creating “build with me” style short-form video scripts for indie makers and engineers.  Your job is to write a timelapse-style voiceover script that is:  Friendly and casual  Shows the progress and decisions made  Explains how the agent or automation is built (briefly)  Adds a personal insight or struggle for authenticity  Assume the creator is showing screencasts or working at their desk. The script should be usable as voiceover or subtitles.  Format it as:  Intro hook (what you’re building and why)  Step-by-step summary (build log, simplified)  Personal reflection or twist (something that didn’t go as planned, or what you learned)  Soft CTA (e.g., follow for more, DM if you want the build, or watch the full version)  Word limit: 100–150 words. Use friendly, natural language like “I wanted to see if I could…” or “Here’s how I did it.”"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        880,
+        0
+      ],
+      "id": "d060d7bb-57a1-4fc8-8964-dcc0ffa88eef",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        180
+      ],
+      "id": "88ac79f6-f6c9-41f0-9544-fd56886a6d74",
+      "name": "OpenAI Chat Model3",
+      "credentials": {
+        "openAiApi": {
+          "id": "9jaBBnB6QCeSlXiQ",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "paivaibhavi15@gmail.com",
+        "subject": "Your agent idea for the day!",
+        "emailType": "text",
+        "message": "=Idea:  {{ $('AI Agent').item.json.output }}\n\nHow to Build: {{ $('Basic LLM Chain').item.json.text }}\n\nScript for video: {{ $json.text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1240,
+        0
+      ],
+      "id": "d0d7b95f-3655-4778-9c7d-5e2b4d114082",
+      "name": "Gmail",
+      "webhookId": "36444772-f282-4c81-9209-9c3a978086ba",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "1UtxNwj6mfFuXDw6",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MongoDB Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "b299b460-7d1d-446c-8e0a-0df9a1cfe93c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a1f3cf4ed6e1c4b272160c3315c97c57ac4083cc674c8889e70985493b33dd7d"
+  },
+  "id": "ZIZ9i3AelfW72i7s",
+  "tags": []
+}
